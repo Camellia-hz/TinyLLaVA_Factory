@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+import pandas as pd
 import torch.distributed as dist
 
 
@@ -47,9 +48,10 @@ def log(*args):
 
         
 def log_trainable_params(model):
-    total_params = sum(p.numel() for p in model.parameters())
-    total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    log(f'Total Parameters: {total_params}, Total Trainable Parameters: {total_trainable_params}')
+    # import pdb; pdb.set_trace()
+    total_params = sum(p.numel() for p in model.parameters()) / 1e6
+    total_trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad) /1e6
+    log(f'Total Parameters: {total_params} M, Total Trainable Parameters: {total_trainable_params} M')
     log(f'Trainable Parameters:')
     for name, param in model.named_parameters():
         if param.requires_grad:

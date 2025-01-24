@@ -118,6 +118,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         output_hidden_states: Optional[bool] = None,
         images: Optional[torch.FloatTensor] = None,
         image_sizes: Optional[List[List[int]]] = None,
+        question_ids:Optional[torch.LongTensor] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
         use_cache = use_cache if use_cache is not None else self.config.use_cache
@@ -136,7 +137,8 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
                 past_key_values,
                 labels,
                 images,
-                image_sizes
+                image_sizes,
+                question_ids
             )
         return self.language_model.forward(
             input_ids=input_ids,
@@ -157,6 +159,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         inputs: Optional[torch.Tensor] = None,
         images: Optional[torch.Tensor] = None,
         image_sizes: Optional[torch.Tensor] = None,
+        question_ids: Optional[torch.Tensor] = None,
         **kwargs,
     ) -> Union[GenerateOutput, torch.LongTensor]:
         position_ids = kwargs.pop("position_ids", None)
@@ -179,7 +182,8 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
                 None,
                 None,
                 images,
-                image_sizes=image_sizes
+                image_sizes=image_sizes,
+                question_ids=question_ids
             )
         else:
             inputs_embeds = self.language_model.get_input_embeddings()(inputs)
@@ -191,7 +195,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
             **kwargs
         )
         
-    def encode_images(self, images):
+    def encode_images(self, images, inputs_embeds=None):
         kwargs = {}
         kwargs['vision_feature_layer'] = self.config.vision_feature_layer
         kwargs['vision_feature_select_strategy'] = self.config.vision_feature_select_strategy
@@ -217,14 +221,25 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         
     def prepare_inputs_labels_for_multimodal(
         self, input_ids, position_ids, attention_mask, past_key_values, labels,
-        images, image_sizes=None
+        images, image_sizes=None, question_ids=None
     ):
         vision_tower = self.vision_tower
         if vision_tower is None or images is None or input_ids.shape[1] == 1:
             return input_ids, position_ids, attention_mask, past_key_values, None, labels
 
-        
-        image_features = self.encode_images(images)
+        if type(images) is list or images.ndim == 5:
+            concat_images = torch.cat([image for image in images], dim=0)
+            # inputs_embeds = self.get_model().embed_tokens(question_ids)
+            # if concat_images.size(0) != inputs_embeds.size(0): # multi imgs
+            #     num = concat_images.size(0) // inputs_embeds.size(0)
+            #     B, L, C = inputs_embeds.shape
+            #     inputs_embeds = inputs_embeds.unsqueeze(1).repeat(1, num, 1, 1).reshape(-1, L, C)
+            image_features = self.encode_images(concat_images)
+            split_sizes = [image.shape[0] for image in images]
+            image_features = torch.split(image_features, split_sizes, dim=0)
+            image_features = [x.flatten(0, 1) for x in image_features]
+        else:
+            image_features = self.encode_images(images)
 
         # TODO: image start / end is not implemented here to support pretraining.
         if getattr(self.config, 'tune_mm_mlp_adapter', False):
@@ -345,7 +360,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
 
         if _position_ids is None:
             position_ids = None
-
+        # import pdb;pdb.set_trace()
         return None, position_ids, attention_mask, past_key_values, new_input_embeds, new_labels
     
 
@@ -357,6 +372,8 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         if pretrained_llm_path is not None:
             language_model_name = pretrained_llm_path
         if language_model_name is not None:
+            # import pdb; pdb.set_trace()
+            language_model_name = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Qwen/Qwen2-0.5B"
             self.language_model = self.language_model.from_pretrained(
                 language_model_name, **kwargs
             )
@@ -372,6 +389,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         
     def load_vision_tower(self, **kwargs):
         vision_tower_name = get_value_from_kwargs(kwargs, 'model_name_or_path')
+        vision_tower_name = "/mnt/csi-data-aly/shared/public/haozhou/checkpoints/siglip/siglip-so400m-patch14-384/"
         self.vision_tower.load_model(vision_tower_name, **kwargs)
 
         

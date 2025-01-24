@@ -32,6 +32,7 @@ class VisionTower(nn.Module):
         if isinstance(self._vision_tower, PreTrainedModel): # hf model
             if pretrained_vision_tower_path is not None:
                 vision_tower_name = pretrained_vision_tower_path
+            vision_tower_name = "/mnt/csi-data-aly/shared/public/haozhou/checkpoints/siglip/siglip-so400m-patch14-384/"
             self._vision_tower = self._vision_tower.from_pretrained(vision_tower_name, **kwargs)      
         else: # nn.Module
             if pretrained_vision_tower_path is not None:

@@ -33,8 +33,8 @@ def load_pretrained_model(model_name_or_path, load_type='hf', load_8bit=False, l
         )
     else:
         kwargs['torch_dtype'] = torch.float16
-    if model_name_or_path is not None and 'lora' not in model_name_or_path:
-        model = TinyLlavaForConditionalGeneration.from_pretrained(model_name_or_path,low_cpu_mem_usage=True)
+    if model_name_or_path is not None and 'lora' not in model_name_or_path and 'finetune' in model_name_or_path:
+        model = TinyLlavaForConditionalGeneration.from_pretrained(model_name_or_path, low_cpu_mem_usage=True)
         
     elif model_name_or_path is not None and 'lora' in model_name_or_path:
         if os.path.exists(os.path.join(model_name_or_path, 'adapter_config.json')):
@@ -56,6 +56,28 @@ def load_pretrained_model(model_name_or_path, load_type='hf', load_8bit=False, l
             print('Merging LoRA weights...')
             model = model.merge_and_unload()
             print('Model is loaded...')
+        
+    elif model_name_or_path is not None and 'lora' not in model_name_or_path and 'finetune' not in model_name_or_path:
+        model_config = TinyLlavaConfig.from_pretrained(model_name_or_path)
+        model = TinyLlavaForConditionalGeneration(model_config)
+        language_model_ckp_path = os.path.join(model_name_or_path, 'language_model/pytorch_model.bin')
+        if os.path.exists(language_model_ckp_path):
+            language_model_ckp = torch.load(language_model_ckp_path, map_location="cpu")
+            language_model_ckp['lm_head.weight'] = language_model_ckp['model.embed_tokens.weight'] # BUG
+            model.language_model.load_state_dict(language_model_ckp)
+        
+        vision_tower_ckp_path = os.path.join(model_name_or_path, 'vision_tower/pytorch_model.bin')
+        if os.path.exists(vision_tower_ckp_path):
+            vision_tower_ckp = torch.load(vision_tower_ckp_path, map_location="cpu")
+            model.vision_tower._vision_tower.load_state_dict(vision_tower_ckp)
+        
+        connector_ckp_path = os.path.join(model_name_or_path, 'connector/pytorch_model.bin')
+        if os.path.exists(connector_ckp_path):
+            connector_ckp = torch.load(connector_ckp_path, map_location="cpu")
+            model.connector.load_state_dict(connector_ckp, strict=False)
+        
+        model.to(torch.float16)
+        print('Model is loaded...') 
         
     image_processor = model.vision_tower._image_processor
     context_len = getattr(model.config, 'max_sequence_length', 2048)

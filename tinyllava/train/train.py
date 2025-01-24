@@ -10,6 +10,7 @@ from tinyllava.training_recipe import TrainingRecipeFactory
 from tinyllava.utils import *
 from tinyllava.model import *
 from tinyllava.data.dataset import make_supervised_data_module
+from tinyllava import deekeeper
 
 IS_TOKENIZER_GREATER_THAN_0_14 = version.parse(tokenizers.__version__) >= version.parse('0.14')
 
@@ -53,6 +54,9 @@ def train():
         (ModelArguments, DataArguments, TrainingArguments))
     model_arguments, data_arguments, training_arguments = parser.parse_args_into_dataclasses()
     
+    if int(os.environ["RANK"]) == 0:
+        deekeeper.init_deekeeper_task("tinyllava", training_arguments.exp_name, True)
+    
     logger_setting(getattr(training_arguments, 'output_dir', None))
 
     training_recipe = TrainingRecipeFactory(training_arguments.training_recipe)(training_arguments) 
@@ -63,6 +67,7 @@ def train():
     model_config.load_from_config(model_arguments)
     model = TinyLlavaForConditionalGeneration(model_config)
     # load pretrained checkpoint
+    # import pdb;pdb.set_trace()
     if training_arguments.pretrained_model_path is not None:
         model = training_recipe.load(model, model_args)
     else:
@@ -78,6 +83,8 @@ def train():
     data_arguments.is_multimodal = True
     data_module = make_supervised_data_module(tokenizer=tokenizer,
                                               data_args=data_arguments)
+    # import IPython
+    # IPython.embed()
     log_trainable_params(model)  # not work well with zero3
     trainer = LLaVATrainer(model=model, #does not require model.to(device), huggingface/deepspeed does it for you?
                            tokenizer=tokenizer,

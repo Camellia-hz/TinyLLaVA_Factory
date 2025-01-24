@@ -20,12 +20,16 @@ VT_VARIANT="${VT_VERSION#*/}"
 LLM_VARIANT="${LLM_VERSION#*/}"
 
 
-set -e -x  # stop on 1st error, debug output of args used
-
+set -e -x
 export CLEARML_API_ACCESS_KEY="E6D6L0KI5ZI79TKD1AW5"
 export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eepsT"
 
-torchrun --nproc_per_node=8 \
+    # --nnodes=${WORLD_SIZE} \
+    # --node_rank=${RANK} \
+    # --master_addr=${MASTER_ADDR} \
+    # --master_port=${MASTER_PORT} \
+
+/mnt/csi-data-aly/user/haozhou/miniconda3/envs/tinyllava/bin/torchrun --nproc_per_node=8 \
     --nnodes=${WORLD_SIZE} \
     --node_rank=${RANK} \
     --master_addr=${MASTER_ADDR} \
@@ -33,7 +37,7 @@ torchrun --nproc_per_node=8 \
     tinyllava/train/train.py \
     --deepspeed ./scripts/zero3.json \
     --data_path  $DATA_PATH \
-    --image_folder $IMAGE_PATH \
+    --image_folder "$IMAGE_PATH" \
     --is_multimodal True \
     --conv_version $CONV_VERSION \
     --model_name_or_path $LLM_VERSION \
@@ -46,18 +50,18 @@ torchrun --nproc_per_node=8 \
     --bf16 True \
     --training_recipe $TRAIN_RECIPE \
     --tune_type_llm full \
-    --tune_type_vision_tower frozen\
+    --tune_type_vision_tower frozen \
     --tune_vision_tower_from_layer 0 \
     --tune_type_connector full \
     --group_by_modality_length True \
-    --pretrained_model_path /mnt/data/sata/yinghu/checkpoints/llava_factory/tiny-llava-${LLM_VARIANT}-${VT_VARIANT}-${VERSION}-pretrain \
-    --output_dir /mnt/data/sata/yinghu/checkpoints/llava_factory/tiny-llava-${LLM_VARIANT}-${VT_VARIANT}-${VERSION}-finetune \
+    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Zhang199/TinyLLaVA-Qwen2-0.5B-SigLIP \
+    --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline-finetune \
     --num_train_epochs 1 \
     --per_device_train_batch_size 4 \
-    --per_device_eval_batch_size 4 \
-    --gradient_accumulation_steps 4 \
+    --per_device_eval_batch_size 1 \
+    --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
-    --save_strategy "steps" \
+    --save_strategy "epoch" \
     --save_steps 50000 \
     --save_total_limit 1 \
     --learning_rate 2e-5 \
@@ -72,4 +76,5 @@ torchrun --nproc_per_node=8 \
     --lazy_preprocess True \
     --report_to tensorboard \
     --tokenizer_use_fast False \
-    --run_name tiny-llava-${LLM_VARIANT}-${VT_VARIANT}-${VERSION}-finetune
+    --run_name tiny-llava-finetune-on-lingoqa \
+    --exp_name TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline
