@@ -1,0 +1,4 @@
+# ninja log v5
+2	4788	1737738698601976355	/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/src/cpu/ms_deform_attn_cpu.o	a99b5306cca4fc17
+3	16158	1737738709972223502	/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/src/vision.o	a40eee0b1f0e2a6e
+3	19891	1737738713714511128	/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/build/temp.linux-x86_64-cpython-310/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/tinyllava/model/vision_tower/pixel_decoder/ops/src/cuda/ms_deform_attn_cuda.o	8f1ed63bf1652fc7

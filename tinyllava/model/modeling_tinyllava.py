@@ -200,7 +200,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
         kwargs['vision_feature_layer'] = self.config.vision_feature_layer
         kwargs['vision_feature_select_strategy'] = self.config.vision_feature_select_strategy
         images = images.to(device=self.device, dtype=self.dtype)
-        image_features = self.vision_tower(images, **kwargs)
+        image_features = self.vision_tower(images, inputs_embeds, **kwargs)
         image_features = self.connector(image_features)
         return image_features
     
@@ -229,12 +229,12 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
 
         if type(images) is list or images.ndim == 5:
             concat_images = torch.cat([image for image in images], dim=0)
-            # inputs_embeds = self.get_model().embed_tokens(question_ids)
-            # if concat_images.size(0) != inputs_embeds.size(0): # multi imgs
-            #     num = concat_images.size(0) // inputs_embeds.size(0)
-            #     B, L, C = inputs_embeds.shape
-            #     inputs_embeds = inputs_embeds.unsqueeze(1).repeat(1, num, 1, 1).reshape(-1, L, C)
-            image_features = self.encode_images(concat_images)
+            inputs_embeds = self.language_model.get_input_embeddings()(question_ids)
+            if concat_images.size(0) != inputs_embeds.size(0): # multi imgs
+                num = concat_images.size(0) // inputs_embeds.size(0)
+                B, L, C = inputs_embeds.shape
+                inputs_embeds = inputs_embeds.unsqueeze(1).repeat(1, num, 1, 1).reshape(-1, L, C)
+            image_features = self.encode_images(concat_images, inputs_embeds=inputs_embeds)
             split_sizes = [image.shape[0] for image in images]
             image_features = torch.split(image_features, split_sizes, dim=0)
             image_features = [x.flatten(0, 1) for x in image_features]
