@@ -178,6 +178,7 @@ class Monitor:
                                                                                     output_attentions=True,
                                                                                     attention_mask=attention_mask)
         self.image_token = self.image_token[0].squeeze()
+        # import pdb; pdb.set_trace()
         self.image_token = torch.cat((torch.zeros(1, 2560).cuda(), self.image_token), dim=0)
 
     def get_output(self, output_dir='results/'):

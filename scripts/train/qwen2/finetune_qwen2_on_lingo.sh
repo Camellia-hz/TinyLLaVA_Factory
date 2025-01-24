@@ -54,7 +54,7 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --tune_vision_tower_from_layer 0 \
     --tune_type_connector full \
     --group_by_modality_length True \
-    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Zhang199/TinyLLaVA-Qwen2-0.5B-SigLIP \
+    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP \
     --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline-finetune \
     --num_train_epochs 1 \
     --per_device_train_batch_size 4 \
