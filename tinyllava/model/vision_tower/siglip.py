@@ -3,17 +3,43 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from transformers import PreTrainedModel
 from . import register_vision_tower
 from .base import VisionTower
-from .efficient_head import EfficientHead
+from .dinov2_head import DistillDINOv2
+from .mask2former_head import DistillMaskFormer
+
+ckpt = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained/pytorch_model.bin"
+
+def get_value_from_kwargs(kwargs, name):
+    if name in kwargs:
+        return kwargs.pop(name)
+    else:
+        return None
+
+class EfficientHead(nn.Module):
+
+    def __init__(self):
+        super(EfficientHead, self).__init__()
+        
+        self.dinov2_head = DistillDINOv2()
+        self.mask2former_head = DistillMaskFormer()
+        state_dict = torch.load(ckpt)
+        print(f"EfficientHead load ckpt: {self.load_state_dict(state_dict)}")
+
+    @torch.no_grad()
+    def forward(self, x):
+        self.eval()
+        decoded_features = self.dinov2_head(x)
+        topk_mask_queries, topk_labels = self.mask2former_head(x)
+        return decoded_features, topk_mask_queries, topk_labels
 
 
 class CrossModalAttention(nn.Module):
     def __init__(self, config=None):
         super(CrossModalAttention, self).__init__()
 
-        self.embed_dim = 1024
+        self.embed_dim = 1152
         self.num_heads = 16
         self.head_dim = self.embed_dim // self.num_heads
         self.dropout = 0.1
@@ -67,24 +93,6 @@ class SIGLIPVisionTower(VisionTower):
         super().__init__(cfg)
         self._vision_tower = SiglipVisionModel(cfg)
         self._image_processor = SiglipImageProcessor.from_pretrained(cfg.model_name_or_path)
-        
-        self.efficient_head = EfficientHead.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained")
-        self.efficient_head.requires_grad_(False)
-        
-        self.text_projection = nn.Linear(896, 1024) # qwen0.5b 896, 
-        self.query_projection = nn.Linear(256, 1024)
-        self.siglip_feature_projection = nn.Linear(1152, 1024)
-        self.fusion_hints = CrossModalAttention()
-        
-        self.query_projection.requires_grad_(True)
-        self.text_projection.requires_grad_(True)
-        self.siglip_feature_projection.requires_grad_(True)
-        self.fusion_hints.requires_grad_(True)
-        
-        self.class_embeds = nn.Embedding(20, 256)
-        self.class_embeds.requires_grad_(True)
-        self.has_class = True
-        self.num_k = 16
         # if self.has_class and model_path is not None and os.path.exists(os.path.join(model_path, "model-00003-of-00003.safetensors")):
         #     from safetensors.torch import load_file
         #     state_dict = load_file(os.path.join(model_path, "model-00003-of-00003.safetensors"))
@@ -97,6 +105,46 @@ class SIGLIPVisionTower(VisionTower):
     def dtype(self):
         return self._vision_tower.dtype
     
+    
+    def load_model(self, vision_tower_name, **kwargs):
+        self._load_model(vision_tower_name, **kwargs)
+        self._vision_tower.requires_grad_(False)
+        
+        self.efficient_head = EfficientHead()
+        self.efficient_head.requires_grad_(False)
+        
+        self.text_projection = nn.Linear(2048, 1152) # qwen0.5b 896, qwen2.5b 2048
+        self.query_projection = nn.Linear(256, 1152)
+        self.dinov2_projection = nn.Linear(1024, 1152)
+        self.fusion_hints = CrossModalAttention()
+        
+        self.query_projection.requires_grad_(True)
+        self.text_projection.requires_grad_(True)
+        self.dinov2_projection.requires_grad_(True)
+        self.fusion_hints.requires_grad_(True)
+        
+        self.class_embeds = nn.Embedding(20, 256)
+        self.class_embeds.requires_grad_(True)
+        self.has_class = True
+        self.num_k = 16
+
+    def _load_model(self, vision_tower_name, **kwargs):
+        pretrained_vision_tower_path = get_value_from_kwargs(kwargs, 'pretrained_vision_tower_path')
+        if isinstance(self._vision_tower, PreTrainedModel): # hf model
+            if pretrained_vision_tower_path is not None:
+                vision_tower_name = pretrained_vision_tower_path
+            vision_tower_name = "/mnt/csi-data-aly/shared/public/haozhou/checkpoints/siglip/siglip-so400m-patch14-384/"
+            self._vision_tower = self._vision_tower.from_pretrained(vision_tower_name, **kwargs)      
+        else: # nn.Module
+            if pretrained_vision_tower_path is not None:
+                vision_tower_weights = torch.load(os.path.join(pretrained_vision_tower_path, 'pytorch_model.bin'), map_location='cpu')
+                def get_w(weights, keyword):
+                    return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
+                self._vision_tower.load_state_dict(vision_tower_weights)
+
+        print("Loading vision tower from ", vision_tower_name)
+        
+    
     def forward(self, x, inputs_embeds=None, **kwargs):
         image_features = self._vision_tower(x, output_hidden_states=True)
         image_features = image_features.hidden_states[kwargs.get('vision_feature_layer', -2)]
@@ -107,7 +155,7 @@ class SIGLIPVisionTower(VisionTower):
             image_features = image_features
         else:
             raise ValueError(f"Unexpected select feature: {kwargs.get('vision_feature_select_strategy')}")
-
+        # import pdb; pdb.set_trace()
         prompt_image_features, object_queries, topk_labels = self.efficient_head(ori_siglip_features)
 
         if self.has_class:
@@ -116,7 +164,7 @@ class SIGLIPVisionTower(VisionTower):
         
         text_embedding = self.text_projection(inputs_embeds.to(dtype=self.dtype)) # B, N, D
         queries_embedding = self.query_projection(object_queries.to(dtype=self.dtype)) # B, N, D
-        image_features = self.siglip_feature_projection(image_features)
+        prompt_image_features = self.dinov2_projection(prompt_image_features)
         
         prompt_features = torch.cat([image_features, prompt_image_features, queries_embedding, text_embedding], dim=1)
         image_features = image_features.to(dtype=self.dtype) + self.fusion_hints(image_features.to(dtype=self.dtype), prompt_features)

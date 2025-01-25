@@ -15,15 +15,14 @@ class CustomModelConfig(PretrainedConfig):
         self.mask2former_dim = mask2former_dim
 
 
-class EfficientHead(PreTrainedModel):
-    config_class = CustomModelConfig
+class EfficientHead(nn.Module):
+    # config_class = CustomModelConfig
 
-    def __init__(self, config):
-        super().__init__(config)
+    def __init__(self):
+        super(EfficientHead, self).__init__()
         
         self.dinov2_head = DistillDINOv2()
         self.mask2former_head = DistillMaskFormer()
-        self.post_init()
 
     @torch.no_grad()
     def forward(self, x):
@@ -34,8 +33,8 @@ class EfficientHead(PreTrainedModel):
 
 
 if __name__ == "__main__":
-    model = EfficientHead.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/LLaVA/pretrained")
+    model = EfficientHead.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained/pytorch_model.bin")
     # 示例输入
-    x = torch.randn(2, 576, 1024)
+    x = torch.randn(2, 729, 1152)
     output = model(x)
     print(output)

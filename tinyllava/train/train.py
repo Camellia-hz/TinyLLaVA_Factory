@@ -85,6 +85,11 @@ def train():
                                               data_args=data_arguments)
     # import IPython
     # IPython.embed()
+    # import pdb; pdb.set_trace()
+    model.vision_tower.requires_grad_(True)
+    model.vision_tower._vision_tower.requires_grad_(False)
+    model.vision_tower.efficient_head.requires_grad_(False)
+    
     log_trainable_params(model)  # not work well with zero3
     trainer = LLaVATrainer(model=model, #does not require model.to(device), huggingface/deepspeed does it for you?
                            tokenizer=tokenizer,
