@@ -19,23 +19,19 @@ MODEL_MAX_LENGTH="${10}"
 VT_VARIANT="${VT_VERSION#*/}"
 LLM_VARIANT="${LLM_VERSION#*/}"
 
-
 set -e -x
-export CLEARML_API_ACCESS_KEY="E6D6L0KI5ZI79TKD1AW5"
-export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eepsT"
+# export CLEARML_API_ACCESS_KEY="E6D6L0KI5ZI79TKD1AW5"
+# export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eepsT"
+export CUDA_VISIBLE_DEVICES=2,3
 
     # --nnodes=${WORLD_SIZE} \
     # --node_rank=${RANK} \
     # --master_addr=${MASTER_ADDR} \
     # --master_port=${MASTER_PORT} \
 
-/mnt/csi-data-aly/user/haozhou/miniconda3/envs/tinyllava/bin/torchrun --nproc_per_node=8 \
-    --nnodes=${WORLD_SIZE} \
-    --node_rank=${RANK} \
-    --master_addr=${MASTER_ADDR} \
-    --master_port=${MASTER_PORT} \
+/mnt/csi-data-aly/user/haozhou/miniconda3/envs/tinyllava/bin/torchrun --nproc_per_node=1 \
     tinyllava/train/train.py \
-    --deepspeed ./scripts/zero3.json \
+    --deepspeed ./scripts/zero2.json \
     --data_path  $DATA_PATH \
     --image_folder "$IMAGE_PATH" \
     --is_multimodal True \
@@ -47,17 +43,17 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --mm_vision_select_layer -2 \
     --image_aspect_ratio square \
     --attn_implementation flash_attention_2 \
-    --bf16 True \
+    --fp16 True \
     --training_recipe $TRAIN_RECIPE \
     --tune_type_llm full \
-    --tune_type_vision_tower frozen \
+    --tune_type_vision_tower frozen\
     --tune_vision_tower_from_layer 0 \
     --tune_type_connector full \
     --group_by_modality_length True \
-    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2.5-3B-SigLIP \
-    --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2.5-3B-SigLIP-LingoQA-baseline-finetune \
+    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Gemma-SigLIP-2.4B \
+    --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Gemma-SigLIP-2.4B-finetune-lingoqa \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 1 \
     --gradient_accumulation_steps 1 \
     --evaluation_strategy "no" \
@@ -77,4 +73,4 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --report_to tensorboard \
     --tokenizer_use_fast False \
     --run_name tiny-llava-finetune-on-lingoqa \
-    --exp_name TinyLLaVA-Qwen2.5-3B-SigLIP-LingoQA-baseline
+    --exp_name TinyLLaVA-Gemma-SigLIP-2.4B-LingoQA-baseline

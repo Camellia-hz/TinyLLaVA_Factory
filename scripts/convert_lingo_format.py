@@ -2,9 +2,9 @@ import json
 import pandas as pd
 import jsonlines
 import copy
-pre_json_file = 'results/baseline.jsonl'
+pre_json_file = 'results/test_model_params.jsonl'
 ori_val_file = 'playground/data/LingoQA/val.json'
-csv_file_path = 'tinyllava_finetune_baseline_v1.csv'
+csv_file_path = 'gemma_true_conv.csv'
 
 
 data = []

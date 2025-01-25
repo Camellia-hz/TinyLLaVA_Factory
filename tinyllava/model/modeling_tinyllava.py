@@ -373,7 +373,12 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
             language_model_name = pretrained_llm_path
         if language_model_name is not None:
             # import pdb; pdb.set_trace()
-            language_model_name = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Qwen/Qwen2-0.5B"
+            if "TinyLLaVA-Qwen2-0.5B-SigLIP" in language_model_name:
+                language_model_name = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Qwen/Qwen2-0.5B"
+            elif "TinyLLaVA-Gemma-SigLIP-2.4B" in language_model_name:
+                language_model_name = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/google/gemma-2b-it"
+            elif "TinyLLaVA-Qwen2.5-3B-SigLIP" in language_model_name:
+                language_model_name = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/Qwen/Qwen2.5-3B"
             self.language_model = self.language_model.from_pretrained(
                 language_model_name, **kwargs
             )

@@ -14,7 +14,14 @@ class Connector(nn.Module):
         if pretrained_connector_path is not None:
             # pretrained_connector_path = os.path.join(pretrained_connector_path, 'pytorch_model.bin')
             # connector_weights = torch.load(pretrained_connector_path, map_location='cpu')
-            connector_weights = load_file("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP/model.safetensors")
+            # import pdb;pdb.set_trace()
+            if "TinyLLaVA-Qwen2-0.5B-SigLIP" in pretrained_connector_path:
+                connector_path = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP/model.safetensors"
+            elif "TinyLLaVA-Gemma-SigLIP-2.4B" in pretrained_connector_path:
+                connector_path = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Gemma-SigLIP-2.4B/model-00002-of-00002.safetensors"
+            elif "TinyLLaVA-Qwen2.5-3B-SigLIP" in pretrained_connector_path:
+                connector_path = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2.5-3B-SigLIP/model-00002-of-00002.safetensors"
+            connector_weights = load_file(connector_path)
             def get_w(weights, keyword):
                 return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
             # import pdb;pdb.set_trace()
