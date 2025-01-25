@@ -179,7 +179,7 @@ class Monitor:
                                                                                     attention_mask=attention_mask)
         self.image_token = self.image_token[0].squeeze()
         # import pdb; pdb.set_trace()
-        self.image_token = torch.cat((torch.zeros(1, 2560).cuda(), self.image_token), dim=0)
+        self.image_token = torch.cat((torch.zeros(1, 896).cuda(), self.image_token), dim=0) # llm dim
 
     def get_output(self, output_dir='results/'):
         print("Starting visualization...")

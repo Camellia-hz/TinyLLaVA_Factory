@@ -64,3 +64,5 @@ output/*
 
 *.csv
 *.jsonl
+*.png
+pretrained
