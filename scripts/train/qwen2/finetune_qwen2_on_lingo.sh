@@ -35,7 +35,7 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --master_addr=${MASTER_ADDR} \
     --master_port=${MASTER_PORT} \
     tinyllava/train/train.py \
-    --deepspeed ./scripts/zero3.json \
+    --deepspeed ./scripts/zero2.json \
     --data_path  $DATA_PATH \
     --image_folder "$IMAGE_PATH" \
     --is_multimodal True \
@@ -57,9 +57,9 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2.5-3B-SigLIP \
     --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2.5-3B-SigLIP-LingoQA-baseline-finetune-hop \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "epoch" \
     --save_steps 50000 \

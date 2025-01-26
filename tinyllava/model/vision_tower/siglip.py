@@ -8,6 +8,7 @@ from . import register_vision_tower
 from .base import VisionTower
 from .dinov2_head import DistillDINOv2
 from .mask2former_head import DistillMaskFormer
+from .efficient_head import EfficientHead, CustomModelConfig
 
 ckpt = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained/pytorch_model.bin"
 
@@ -17,22 +18,22 @@ def get_value_from_kwargs(kwargs, name):
     else:
         return None
 
-class EfficientHead(nn.Module):
+# class EfficientHead(nn.Module):
 
-    def __init__(self):
-        super(EfficientHead, self).__init__()
+#     def __init__(self):
+#         super(EfficientHead, self).__init__()
         
-        self.dinov2_head = DistillDINOv2()
-        self.mask2former_head = DistillMaskFormer()
-        state_dict = torch.load(ckpt)
-        print(f"EfficientHead load ckpt: {self.load_state_dict(state_dict)}")
+#         self.dinov2_head = DistillDINOv2()
+#         self.mask2former_head = DistillMaskFormer()
+#         state_dict = torch.load(ckpt)
+#         print(f"EfficientHead load ckpt: {self.load_state_dict(state_dict)}")
 
-    @torch.no_grad()
-    def forward(self, x):
-        self.eval()
-        decoded_features = self.dinov2_head(x)
-        topk_mask_queries, topk_labels = self.mask2former_head(x)
-        return decoded_features, topk_mask_queries, topk_labels
+#     @torch.no_grad()
+#     def forward(self, x):
+#         self.eval()
+#         decoded_features = self.dinov2_head(x)
+#         topk_mask_queries, topk_labels = self.mask2former_head(x)
+#         return decoded_features, topk_mask_queries, topk_labels
 
 
 class CrossModalAttention(nn.Module):
@@ -110,7 +111,9 @@ class SIGLIPVisionTower(VisionTower):
         self._load_model(vision_tower_name, **kwargs)
         self._vision_tower.requires_grad_(False)
         
-        self.efficient_head = EfficientHead()
+        # config = CustomModelConfig.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained")
+        # self.efficient_head = EfficientHead(config)
+        self.efficient_head = EfficientHead.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained")
         self.efficient_head.requires_grad_(False)
         
         self.text_projection = nn.Linear(2048, 1152) # qwen0.5b 896, qwen2.5b 2048
@@ -137,6 +140,7 @@ class SIGLIPVisionTower(VisionTower):
             self._vision_tower = self._vision_tower.from_pretrained(vision_tower_name, **kwargs)      
         else: # nn.Module
             if pretrained_vision_tower_path is not None:
+                import os
                 vision_tower_weights = torch.load(os.path.join(pretrained_vision_tower_path, 'pytorch_model.bin'), map_location='cpu')
                 def get_w(weights, keyword):
                     return {k.split(keyword + '.')[1]: v for k, v in weights.items() if keyword in k}
