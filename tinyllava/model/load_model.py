@@ -35,7 +35,17 @@ def load_pretrained_model(model_name_or_path, load_type='hf', load_8bit=False, l
         kwargs['torch_dtype'] = torch.float16
     if model_name_or_path is not None and 'lora' not in model_name_or_path and ('finetune' in model_name_or_path or 'tinyllava' in model_name_or_path):
         model = TinyLlavaForConditionalGeneration.from_pretrained(model_name_or_path, low_cpu_mem_usage=True)
-        
+        if "hop" in model_name_or_path:
+            from safetensors.torch import load_file
+            hop_state_dict = load_file(os.path.join(model_name_or_path, "model-00002-of-00002.safetensors"))
+            state_dict_real = {
+                k.replace('vision_tower.', ''): v
+                for k, v in hop_state_dict.items() if ('vision_tower.' in k and \
+                                                       'vision_tower._vision_tower' not in k and \
+                                                       'vision_tower.efficient_head' not in k)
+            }
+            missing, unexpected = model.vision_tower.load_state_dict(state_dict_real, strict=False)
+            assert len(unexpected) == 0
     elif model_name_or_path is not None and 'lora' in model_name_or_path:
         if os.path.exists(os.path.join(model_name_or_path, 'adapter_config.json')):
             model_config = TinyLlavaConfig.from_pretrained(model_name_or_path)

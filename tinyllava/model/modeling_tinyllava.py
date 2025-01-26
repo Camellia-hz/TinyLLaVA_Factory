@@ -62,6 +62,7 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
 
         self.language_model = LLMFactory(config.llm_model_name_or_path)[0](config.text_config)
         self.vision_tower = VisionTowerFactory(config.vision_model_name_or_path)(config.vision_config)
+        self.vision_tower.load_model(config.vision_model_name_or_path)
         self.connector = ConnectorFactory(config.connector_type)(config)
 
         (Tokenizer, post_load) = LLMFactory(config.llm_model_name_or_path)[1]
