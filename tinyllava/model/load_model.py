@@ -37,7 +37,10 @@ def load_pretrained_model(model_name_or_path, load_type='hf', load_8bit=False, l
         model = TinyLlavaForConditionalGeneration.from_pretrained(model_name_or_path, low_cpu_mem_usage=True)
         if "hop" in model_name_or_path:
             from safetensors.torch import load_file
-            hop_state_dict = load_file(os.path.join(model_name_or_path, "model-00002-of-00002.safetensors"))
+            if "Qwen2-0.5B" in model_name_or_path:
+                hop_state_dict = load_file(os.path.join(model_name_or_path, "model.safetensors"))
+            else:
+                hop_state_dict = load_file(os.path.join(model_name_or_path, "model-00002-of-00002.safetensors"))
             state_dict_real = {
                 k.replace('vision_tower.', ''): v
                 for k, v in hop_state_dict.items() if ('vision_tower.' in k and \
