@@ -116,13 +116,14 @@ def generate_word_images_before(tokenizer, input_ids, tensor, num, top_words_ten
 
 
 class Monitor:
-    def __init__(self, args, model, llm_layers_index):
+    def __init__(self, args, model, llm_layers_index, hidden_size):
         self.model = model
         self.args = args
         self.input_ids = None
         self.image = None
         self.params = list(model.parameters())
         self.output = defaultdict(dict)
+        self.hidden_size = hidden_size
         self.attentions = []
         self.hidden = []
         self.logit = []
@@ -179,7 +180,7 @@ class Monitor:
                                                                                     attention_mask=attention_mask)
         self.image_token = self.image_token[0].squeeze()
         # import pdb; pdb.set_trace()
-        self.image_token = torch.cat((torch.zeros(1, 896).cuda(), self.image_token), dim=0) # llm dim
+        self.image_token = torch.cat((torch.zeros(1, self.hidden_size).cuda(), self.image_token), dim=0)
 
     def get_output(self, output_dir='results/'):
         print("Starting visualization...")
