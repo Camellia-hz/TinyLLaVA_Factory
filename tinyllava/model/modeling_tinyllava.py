@@ -237,7 +237,9 @@ class TinyLlavaForConditionalGeneration(TinyLlavaPreTrainedModel):
                 B, L, C = inputs_embeds.shape
                 inputs_embeds = inputs_embeds.unsqueeze(1).repeat(1, num, 1, 1).reshape(-1, L, C)
             image_features = self.encode_images(concat_images, inputs_embeds=inputs_embeds)
-            split_sizes = [image.shape[0] for image in images]
+            # split_sizes = [image.shape[0] for image in images]
+            # import pdb; pdb.set_trace()
+            split_sizes = [1] * images.shape[0]
             image_features = torch.split(image_features, split_sizes, dim=0)
             image_features = [x.flatten(0, 1) for x in image_features]
         else:

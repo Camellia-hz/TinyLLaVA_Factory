@@ -54,12 +54,12 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --tune_vision_tower_from_layer 0 \
     --tune_type_connector full \
     --group_by_modality_length True \
-    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP \
-    --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline-finetune-hop \
+    --pretrained_model_path /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2.5-3B-SigLIP \
+    --output_dir /mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/hz/TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline-finetune-hop-one-frame \
     --num_train_epochs 1 \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 2 \
     --per_device_eval_batch_size 1 \
-    --gradient_accumulation_steps 1 \
+    --gradient_accumulation_steps 2 \
     --evaluation_strategy "no" \
     --save_strategy "epoch" \
     --save_steps 50000 \
@@ -77,4 +77,4 @@ export CLEARML_API_SECRET_KEY="wlGIykhRIQIJ7Em8duOkkBSrZhR67WGsbSBFp1WvkwfG5eeps
     --report_to tensorboard \
     --tokenizer_use_fast False \
     --run_name tiny-llava-finetune-on-lingoqa \
-    --exp_name TinyLLaVA-Qwen2-0.5B-SigLIP-LingoQA-baseline-hop
+    --exp_name TinyLLaVA-Qwen2.5-3B-SigLIP-LingoQA-baseline-hop-one-frame

@@ -130,6 +130,7 @@ class SIGLIPVisionTower(VisionTower):
         self.class_embeds.requires_grad_(True)
         self.has_class = True
         self.num_k = 16
+        self.frames = 5
 
     def _load_model(self, vision_tower_name, **kwargs):
         pretrained_vision_tower_path = get_value_from_kwargs(kwargs, 'pretrained_vision_tower_path')
@@ -169,7 +170,19 @@ class SIGLIPVisionTower(VisionTower):
         text_embedding = self.text_projection(inputs_embeds.to(dtype=self.dtype)) # B, N, D
         queries_embedding = self.query_projection(object_queries.to(dtype=self.dtype)) # B, N, D
         prompt_image_features = self.dinov2_projection(prompt_image_features)
+
+        bs, seq_len, dim = image_features.shape
+        image_features = image_features.reshape(bs//self.frames, self.frames, seq_len, dim)
+        prompt_image_features = prompt_image_features.reshape(bs//self.frames, self.frames, seq_len, dim)
+        queries_embedding = queries_embedding.reshape(bs//self.frames, self.frames, queries_embedding.size(1), dim)
+        text_embedding = text_embedding.reshape(bs//self.frames, self.frames, text_embedding.size(1), dim)
         
-        prompt_features = torch.cat([image_features, prompt_image_features, queries_embedding, text_embedding], dim=1)
-        image_features = image_features.to(dtype=self.dtype) + self.fusion_hints(image_features.to(dtype=self.dtype), prompt_features)
+        query = image_features[:, -1, :, :]
+        key_value = torch.cat([image_features.reshape(bs//self.frames, self.frames*seq_len, dim), 
+                               prompt_image_features[:, -1, :, :], 
+                               queries_embedding[:, -1, :, :], 
+                               text_embedding[:, -1, :, :]], 
+                               dim=1)
+        
+        image_features = query + self.fusion_hints(query, key_value)
         return image_features.to(x.dtype)
