@@ -8,13 +8,13 @@ from tinyllava.utils import *
 from tinyllava.data import *
 from tinyllava.model import *
 
-prompt = "What are the things I should be cautious about when I visit here?"
-image_file = "https://llava-vl.github.io/static/images/view.jpg"
+prompt = "Can you overtake the cyclist?"
+image_file = "/mnt/csi-data-aly/user/haozhou/Projects/LLaVA/playground/data/LingoQA/evaluation/images/val/74f8db8cfd196bdaf188f43e2aba689d/4.jpg"
 
 # model = AutoModelForCausalLM.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP", trust_remote_code=True)
 # tokenizer = AutoTokenizer.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP", trust_remote_code=True)
 # model.tokenizer = tokenizer
-model_path = "/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP"
+model_path = "checkpoints/hz/TinyLLaVA-Qwen2.5-3B-SigLIP-LingoQA-baseline-finetune-hop"
 model, tokenizer, image_processor, context_len = load_pretrained_model(model_path)
 
 args = type('Args', (), {
@@ -30,6 +30,6 @@ args = type('Args', (), {
     "max_new_tokens": 512
 })()
 
-monitor = Monitor(args, model, llm_layers_index=23)
+monitor = Monitor(args, model, llm_layers_index=35, hidden_size=2048)
 eval_model(args)
-monitor.get_output(output_dir='results/')
+monitor.get_output(output_dir='results/hop/')

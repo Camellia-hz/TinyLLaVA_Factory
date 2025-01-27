@@ -3,7 +3,7 @@ import re
 import requests
 from PIL import Image
 from io import BytesIO
-
+import copy
 import torch
 from transformers import PreTrainedModel
 
@@ -50,6 +50,13 @@ def eval_model(args):
         tokenizer = model.tokenizer
         image_processor = model.vision_tower._image_processor
     qs = args.query
+    question = copy.deepcopy(qs)
+    
+    question_ids = tokenizer(question,
+                    return_tensors="pt",
+                    padding='max_length',
+                    max_length=20,
+                    truncation=True).input_ids
     qs = DEFAULT_IMAGE_TOKEN + "\n" + qs
 
     text_processor = TextPreprocess(tokenizer, args.conv_mode)
@@ -80,7 +87,7 @@ def eval_model(args):
     with torch.inference_mode():
         output_ids = model.generate(
             input_ids,
-            images=images_tensor,
+            images=images_tensor.unsqueeze(1),
             do_sample=True if args.temperature > 0 else False,
             temperature=args.temperature,
             top_p=args.top_p,
@@ -88,6 +95,7 @@ def eval_model(args):
             pad_token_id=tokenizer.pad_token_id,
             max_new_tokens=args.max_new_tokens,
             use_cache=True,
+            question_ids=question_ids.cuda(),
             stopping_criteria=[stopping_criteria],
         )
 
