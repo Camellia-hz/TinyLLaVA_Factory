@@ -3,8 +3,8 @@ from tinyllava.eval.run_tiny_llava import eval_model
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tinyllava_visualizer.tinyllava_visualizer import *
 
-prompt = "How many cyclists are there?"
-image_file = "playground/data/LingoQA/evaluation/images/val/00fb5ab9e2d508c573d588652cf0d025/4.jpg"
+prompt = "Can you overtake the cyclist?"
+image_file = "/mnt/csi-data-aly/user/haozhou/Projects/LLaVA/playground/data/LingoQA/evaluation/images/val/74f8db8cfd196bdaf188f43e2aba689d/4.jpg"
 
 # model = AutoModelForCausalLM.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP", trust_remote_code=True)
 # tokenizer = AutoTokenizer.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/checkpoints/tinyllava/TinyLLaVA-Qwen2-0.5B-SigLIP", trust_remote_code=True)
