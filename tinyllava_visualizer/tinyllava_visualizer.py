@@ -37,25 +37,51 @@ def extract_max_values_and_indices(tensor, k):
     max_values_with_indices = torch.stack((max_indices, max_values), dim=3)
     return max_values_with_indices
 
-
-def visualize_grid_to_grid(i, mask, image, output_dir, grid_size=27, alpha=0.6):
-    if not isinstance(grid_size, tuple):
-        grid_size = (grid_size, grid_size)
+from matplotlib.colors import LinearSegmentedColormap
+def visualize_grid_to_grid(i, mask, image, output_dir, grid_size=27, alpha=0.4):
+    # 转换 mask
     mask = mask.detach().cpu().numpy()
     mask = Image.fromarray(mask).resize((384, 384))
-    fig, ax = plt.subplots(1, 2, figsize=(10, 7))
-    fig.tight_layout()
-
-    ax[0].imshow(image)
-    ax[0].axis('off')
-
-    ax[1].imshow(image)
-    im = ax[1].imshow(mask / np.max(mask), alpha=alpha, cmap='rainbow')
-    ax[1].axis('off')
-    cbar = fig.colorbar(im, ax=ax[1])
-    cbar.set_label('Color Temperature')
-    name = os.path.join(output_dir, "hot_image", f"{i}.png")
-    plt.savefig(name)
+    mask = np.array(mask).astype(float)
+    
+    # --- 动态范围调整（保持原始值映射）---
+    mask_normalized = (mask - np.min(mask)) / (np.max(mask) - np.min(mask))  # 归一化到 [0,1]
+    
+    # --- 自定义蓝红渐变色（更柔和）---
+    colors = [
+        (0, "navy"),         # 最低值：深蓝
+        (0.3, "dodgerblue"), # 过渡：亮蓝
+        (0.5, "white"),      # 中间值：白（增强对比）
+        (0.7, "lightcoral"), # 过渡：浅红
+        (1, "darkred")     # 最高值：亮红
+    ]
+    cmap = LinearSegmentedColormap.from_list("custom_blue_red", colors)
+    
+    # --- 可视化 ---
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.imshow(image)
+    im = ax.imshow(
+        mask_normalized, 
+        cmap=cmap,
+        alpha=alpha,
+        vmin=0.0, 
+        vmax=1.0  # 使用原始归一化范围
+    )
+    ax.axis('off')
+    
+    # --- 颜色条标注原始值 ---
+    cbar = fig.colorbar(im, ax=ax, pad=0.02)
+    cbar.set_label('Color Temperature', fontsize=12)
+    cbar.set_ticks([0.0, 0.3, 0.6, 1.0])
+    cbar.set_ticklabels([
+        'Cold\n(0.86)', 
+        'Cool\n(0.90)', 
+        'Warm\n(0.95)', 
+        'Hot\n(1.00)'
+    ])
+    
+    # 保存
+    plt.savefig(os.path.join(output_dir, "hot_image", f"{i}.png"), bbox_inches='tight', dpi=300)
     plt.close(fig)
 
 
