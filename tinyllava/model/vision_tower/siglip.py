@@ -116,7 +116,7 @@ class SIGLIPVisionTower(VisionTower):
         self.efficient_head = EfficientHead.from_pretrained("/mnt/csi-data-aly/user/haozhou/Projects/TinyLLaVA_Factory/pretrained")
         self.efficient_head.requires_grad_(False)
         
-        self.text_projection = nn.Linear(2048, 1152) # qwen0.5b 896, qwen2.5b 2048
+        self.text_projection = nn.Linear(896, 1152) # qwen0.5b 896, qwen2.5b 2048
         self.query_projection = nn.Linear(256, 1152)
         self.dinov2_projection = nn.Linear(1024, 1152)
         self.fusion_hints = CrossModalAttention()
@@ -130,7 +130,7 @@ class SIGLIPVisionTower(VisionTower):
         self.class_embeds.requires_grad_(True)
         self.has_class = True
         self.num_k = 16
-        self.frames = 5
+        self.frames = 1
 
     def _load_model(self, vision_tower_name, **kwargs):
         pretrained_vision_tower_path = get_value_from_kwargs(kwargs, 'pretrained_vision_tower_path')

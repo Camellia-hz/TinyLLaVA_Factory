@@ -88,7 +88,7 @@ def eval_model(args):
         input_ids = input_ids.unsqueeze(0).cuda()
 
         image_tensors = []
-        for img_path in image_path_list:
+        for img_path in image_path_list[0:1]:
             image = Image.open(os.path.join(args.image_folder, img_path)).convert('RGB')
             image_tensor = image_processor(image)
             image_tensors.append(image_tensor)
